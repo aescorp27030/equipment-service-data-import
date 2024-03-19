@@ -144,7 +144,7 @@ namespace DataNormalization
                     DimensionUnit = "in",
                     Height = part.Height,
                     Length = part.Length,
-                    Width = part.Width
+                    Width = part.Width 
                 },
                 // This seems to work for both files
                 Template = GetBenshawDescriptionOnlyTemplate(part.Description ?? string.Empty)
