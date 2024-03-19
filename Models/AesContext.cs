@@ -8,10 +8,12 @@ namespace DataNormalization.Models;
 
 public partial class AesContext : DbContext
 {
-    public AesContext(DbContextOptions<AesContext> options)
-        : base(options)
+    public AesContext(DbContextOptions<AesContext> options) : base(options)
     {
     }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
+            optionsBuilder.UseSqlServer("server=192.168.5.199;Database=AES;Trusted_Connection=True;TrustServerCertificate=True");
 
     public virtual DbSet<EquipmentService_DimensionsUom> DimensionsUom { get; set; }
 
