@@ -44,8 +44,8 @@ internal class Program
                 csvWriter.WriteRecords(allParts);
              */
 
-            //var addPartsToDbTask = AddPartsToDbAsync(allParts);
-            //addPartsToDbTask.Wait();
+            var addPartsToDbTask = AddPartsToDbAsync(allParts);
+            addPartsToDbTask.Wait();
         }
         catch (Exception ex)
         {

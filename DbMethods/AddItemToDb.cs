@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using DataNormalization.Models;
 using DataNormalization.Objects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace DataNormalization.DbMethods;
 
@@ -27,8 +29,9 @@ public class AddItemToDb
             // Retrieve the Lifecycle ID if it exists
             var lifecycleId = await context.LifeCycles.FirstOrDefaultAsync(l => l.lifecycle.ToLower() == part.LifecycleStatus.ToLower());
 
-            // Add a part to the database
-            var addedPart = await context.ItemInfo.AddAsync(new EquipmentService_ItemInfo
+            var existingPart = await context.ItemInfo.FirstOrDefaultAsync(p => p.PartNumber == part.PartNumber && p.Manufacturer == part.Manufacturer);
+
+            var itemInfo = new EquipmentService_ItemInfo
             {
                 PartNumber = part.PartNumber,
                 Description = part.Description,
@@ -39,7 +42,23 @@ public class AddItemToDb
                 ListPrice = part.ListPrice,
                 CreatedBy = "SYSTEM",
                 lifecycleId = lifecycleId?.id
-            });
+            };
+
+            if (existingPart is not null)
+            {
+                existingPart.Description = itemInfo.Description;
+                existingPart.Uom = itemInfo.Uom;
+                existingPart.Weight = itemInfo.Weight;
+                existingPart.WeightUnit = itemInfo.WeightUnit;
+                existingPart.ListPrice = itemInfo.ListPrice;
+                existingPart.lifecycleId = itemInfo.lifecycleId;
+            }
+
+            // Add a part to the database
+            var newPart = existingPart is null ? await context.ItemInfo.AddAsync(itemInfo) : null;
+            var addedPart = existingPart ?? newPart.Entity;
+
+            if (addedPart is null) throw new Exception("Item failed to import.");
 
             await context.SaveChangesAsync();
 
@@ -62,7 +81,7 @@ public class AddItemToDb
 
                     await context.SaveChangesAsync();
 
-                    addedPart.Entity.DimensionId = dimension.Entity.DimensionId;
+                    addedPart.DimensionId = dimension.Entity.DimensionId;
                 }
             }
 
@@ -76,7 +95,7 @@ public class AddItemToDb
                 {
                     await context.ItemInfoTemplateValues.AddAsync(new EquipmentService_ItemInfoTemplateValues
                     {
-                        ItemInfoId = addedPart.Entity.ItemInfoId,
+                        ItemInfoId = addedPart.ItemInfoId,
                         TemplateId = template.TemplateId,
                         FieldValue1 = part.Template.Value1,
                         FieldValue2 = part.Template.Value2,
@@ -92,8 +111,18 @@ public class AddItemToDb
                 }
             }
 
-            // Add vendor prices to the database if Our Price has a value
-
+            // Add vendor prices to the database if Our Price and VendorId have values
+            if (part.OurPrice is not null && part.ListPrice is not null && part.VendorId.HasValue)
+            {
+                await context.VendorPrices.AddAsync(new EquipmentService_VendorPrices
+                {
+                    ItemId = addedPart.ItemInfoId,
+                    VendorId = part.VendorId.Value,
+                    MSRP = part.ListPrice.Value,
+                    OurPrice = part.OurPrice.Value,
+                    PrimaryVendor = true
+                });
+            }
              
             await context.SaveChangesAsync();
         }

@@ -12,7 +12,7 @@ public class Part
     public decimal? OurPrice { get; set; }
     public string Uom { get; set; } = "ea";
     public string? LifecycleStatus { get; set; }
-    public bool AesIsAuthorizedDistributor = true;
+    public int? VendorId { get; set; }
     public Dimensions? Dimensions { get; set; }
     public Template? Template { get; set; }
 }

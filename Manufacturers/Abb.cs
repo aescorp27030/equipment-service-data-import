@@ -31,7 +31,8 @@ public class Abb
             ListPrice = part.ListPrice,
             OurPrice = part.OurPrice,
             Dimensions = GetAbbDimensions(part.Dimensions ?? string.Empty),
-            Template = GetAbbTemplate(part.Description ?? string.Empty)
+            Template = GetAbbTemplate(part.Description ?? string.Empty),
+            VendorId = 10009 // ABB/Baldor
         }).Where(IsValidPartPredicate.IsValidPart).ToList();
     }
 

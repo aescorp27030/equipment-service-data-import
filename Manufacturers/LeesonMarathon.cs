@@ -29,7 +29,8 @@ public class LeesonMarathon
             ListPrice = part.ListPrice,
             OurPrice = part.OurPrice,
             LifecycleStatus = part.LifecycleStatus,
-            Template = GetLeesonMarathonTemplate(part.Description, part.Manufacturer, part.Category)
+            Template = GetLeesonMarathonTemplate(part.Description, part.Manufacturer, part.Category),
+            VendorId = part.Manufacturer?.ToLower().Contains("leeson") is true ? 10325 : 13332 // Leeson or Marathon
         }).Where(IsValidPartPredicate.IsValidPart).OrderByDescending(x => x.Manufacturer).ToList();
     }
 
