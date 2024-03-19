@@ -1,4 +1,5 @@
-﻿namespace DataNormalization.Objects;
+﻿#nullable enable
+namespace DataNormalization.Objects;
 
 public class Part
 {

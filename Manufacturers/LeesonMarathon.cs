@@ -8,7 +8,7 @@ using System.Linq;
 using System;
 using DataNormalization.Shared;
 
-namespace DataNormalization.ManufacturerMethods;
+namespace DataNormalization.Manufacturers;
 
 public class LeesonMarathon
 {

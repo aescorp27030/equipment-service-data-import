@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace DataNormalization.ManufacturerMethods;
+namespace DataNormalization.Manufacturers;
 
 public class Abb
 {

@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System;
 using System.Linq;
 
-namespace DataNormalization.ManufacturerMethods;
+namespace DataNormalization.Manufacturers;
 
 public class Benshaw
 {

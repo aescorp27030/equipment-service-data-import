@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using CsvHelper;
-using DataNormalization.ManufacturerMethods;
+using DataNormalization.DbMethods;
+using DataNormalization.Manufacturers;
 using DataNormalization.Objects;
 
 namespace DataNormalization;
@@ -35,13 +38,35 @@ internal class Program
             allParts.AddRange(leesonMarathonParts);
 
             // Write all parts to a CSV file
-            using var writer = new StreamWriter(outputFilePath);
-            using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-            csvWriter.WriteRecords(allParts);
+            /*
+                using var writer = new StreamWriter(outputFilePath);
+                using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
+                csvWriter.WriteRecords(allParts);
+             */
+
+            var addPartsToDbTask = AddPartsToDbAsync(allParts);
+            addPartsToDbTask.Wait();
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex);
+        }
+    }
+
+    // Add all parts to the database
+    public static async Task AddPartsToDbAsync(List<Part> parts)
+    {
+        var percentToShow = 0;
+
+        foreach (var part in parts)
+        {
+            await AddItemToDb.AddItemToDbAsync(part);
+            var percentComplete = (parts.IndexOf(part) + 1) / (double)parts.Count * 100;
+            var percentCompleteRounded = (int)Math.Floor(percentComplete);
+
+            if (percentCompleteRounded <= percentToShow) continue;
+            percentToShow = percentCompleteRounded;
+            Console.WriteLine($"{percentToShow}% complete");
         }
     }
 }
