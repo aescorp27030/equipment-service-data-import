@@ -39,6 +39,7 @@ public class Abb
     {
         if (string.IsNullOrEmpty(description)) return null;
         var result = new Template();
+        description = description.Replace(' ', ',');
         var templateValues = description.Split(',').ToList();
 
         // The only template we have for ABB is motors
