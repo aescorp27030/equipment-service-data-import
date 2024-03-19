@@ -62,7 +62,7 @@ namespace DataNormalization
                 OurPrice = part.OurPrice,
                 LifecycleStatus = part.LifecycleStatus,
                 Template = GetLeesonMarathonTemplate(part.Description, part.Manufacturer, part.Category)
-            }).Where(IsValidPart).ToList();
+            }).Where(IsValidPart).OrderByDescending(x => x.Manufacturer).ToList();
         }
 
         private static Template? GetLeesonMarathonTemplate(string? description, string? manufacturer, string? category)
@@ -76,6 +76,7 @@ namespace DataNormalization
 
             if (manufacturer?.ToLower().Contains("leeson") is true)
             {
+                // This is the best we can do to normalize this data, it's extremely inconsistent
                 description = description.Replace(".5HP", " 1/2HP");
                 description = description.Replace("..", ",");
                 description = description.Replace(".", ",");
@@ -83,11 +84,34 @@ namespace DataNormalization
                 if (description.IndexOf(",", StringComparison.Ordinal) == 0)
                     description = description.Substring(1);
 
-                if (templateValues.Count >= 5) // One of the Leeson motors that is separated by ','
+                templateValues = description.Split(',').ToList();
+
+                if (templateValues.Count >= 4) // If it has less than 4 sections we probably can't map it
                 {
-                    // Not sure if we can do anything else with this brand, the data is too inconsistent
-                    //result.Value6 = templateValues[0]; // HP
-                    //result.Value3 = templateValues[1]; // RPM
+                    result.Value6 = templateValues[0]; // HP
+                    result.Value3 = templateValues[1]; // RPM
+                    result.Value5 = templateValues[2]; // Enclosure
+                    result.Value1 = templateValues[3]; // Frame
+                    result.Value10 = templateValues.FirstOrDefault(x => x.ToLower().Contains("ph")); // Phase
+                    result.Value8 = templateValues.FirstOrDefault(x => x.ToLower().Contains("hz")); // Frequency
+
+                    var voltage = templateValues.FirstOrDefault(x => x.ToLower().Contains("v") && x.ToLower().Contains("tenv") is false);
+
+                    if (!string.IsNullOrEmpty(voltage))
+                    {
+                        var splitBySlash = voltage.Split('/');
+
+                        if (splitBySlash.Length < 3)
+                        {
+                            result.Value2 = voltage; // Voltage
+                        }
+                        else
+                        {
+                            result.Value10 = splitBySlash[0]; // Phase
+                            result.Value8 = splitBySlash[1]; // Frequency
+                            result.Value2 = string.Join("/", splitBySlash.Skip(2)); // Voltage
+                        }
+                    }
                 }
             }
             else if (manufacturer?.ToLower().Contains("marathon") is true || manufacturer?.ToLower().Contains("century") is true)
