@@ -37,7 +37,7 @@ public class AddItemToDb
                 Weight = part.Weight,
                 WeightUnit = part.WeightUnit,
                 ListPrice = part.ListPrice,
-                CreatedBy = "SYSTEM",
+                CreatedBy = "IMPORT_2024-3-20",
                 lifecycleId = lifecycleId?.id
             };
 
