@@ -22,7 +22,8 @@ public class AddItemToDb
             if (manufacturer is not null && manufacturer.AuthorizedDistributor is not true) manufacturer.AuthorizedDistributor = true;
 
             // Retrieve the Lifecycle ID if it exists
-            var lifecycleId = await context.LifeCycles.FirstOrDefaultAsync(l => l.lifecycle.ToLower() == part.LifecycleStatus.ToLower());
+            var lifecycleId = string.IsNullOrEmpty(part.LifecycleStatus) 
+                ? null : await context.LifeCycles.FirstOrDefaultAsync(l => l.lifecycle.ToLower() == part.LifecycleStatus.ToLower());
 
             // Determine if the part already exists and update it if it does
             var existingPart = await context.ItemInfo.FirstOrDefaultAsync(p => p.PartNumber == part.PartNumber && p.Manufacturer == part.Manufacturer);
@@ -127,7 +128,8 @@ public class AddItemToDb
                         VendorId = part.VendorId.Value,
                         MSRP = part.ListPrice.Value,
                         OurPrice = part.OurPrice.Value,
-                        PrimaryVendor = true
+                        PrimaryVendor = true,
+                        LastUpdated = DateTime.Now
                     });
                 }
             }

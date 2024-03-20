@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using CsvHelper;
 using DataNormalization.DbMethods;
@@ -38,12 +37,10 @@ internal class Program
             allParts.AddRange(leesonMarathonParts);
 
             // Write all parts to a CSV file
-            /*
-                using var writer = new StreamWriter(outputFilePath);
-                using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-                csvWriter.WriteRecords(allParts);
-             */
-
+            //using var writer = new StreamWriter(outputFilePath);
+            //using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
+            //csvWriter.WriteRecords(allParts);
+            
             var addPartsToDbTask = AddPartsToDbAsync(allParts);
             addPartsToDbTask.Wait();
         }

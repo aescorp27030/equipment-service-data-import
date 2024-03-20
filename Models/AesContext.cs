@@ -13,7 +13,7 @@ public partial class AesContext : DbContext
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-            optionsBuilder.UseSqlServer("server=192.168.5.199;Database=AES-BackupData;Trusted_Connection=True;TrustServerCertificate=True");
+            optionsBuilder.UseSqlServer("server=192.168.5.199;Database=AES-BACKUPDATA;Trusted_Connection=True;TrustServerCertificate=True");
 
     public virtual DbSet<EquipmentService_DimensionsUom> DimensionsUom { get; set; }
 
@@ -266,6 +266,8 @@ public partial class AesContext : DbContext
         {
             entity.HasKey(e => e.VendorID);
 
+            entity.ToTable("VENDORS");
+
             entity.HasIndex(e => e.VendorID, "ui_VendorIdIndex").IsUnique();
 
             entity.Property(e => e.VendorID).ValueGeneratedNever();
@@ -344,6 +346,8 @@ public partial class AesContext : DbContext
         modelBuilder.Entity<tblManufacturers>(entity =>
         {
             entity.HasKey(e => e.ManfName).HasName("tblManufacturers_pk");
+
+            entity.ToTable("tblManufacturers");
 
             entity.HasIndex(e => e.ManfName, "ui_ftTblManufactures").IsUnique();
 

@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System;
+using System.Text.RegularExpressions;
 using DataNormalization.Shared;
 
 namespace DataNormalization.Manufacturers;
@@ -23,7 +24,8 @@ public class LeesonMarathon
 
         return leesonMarathonParts.Select(part => new Part
         {
-            PartNumber = part.PartNumber,
+            // For some reason this csv has hidden characters that need to be removed
+            PartNumber = Regex.Replace(part.PartNumber ?? "", "[^a-zA-Z0-9.-]", ""),
             Manufacturer = part.Manufacturer,
             Description = part.Description,
             ListPrice = part.ListPrice,
