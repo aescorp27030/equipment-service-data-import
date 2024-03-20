@@ -43,6 +43,9 @@ public class Abb
         description = description.Replace(' ', ',');
         var templateValues = description.Split(',').ToList();
 
+        // Some descriptions are missing commas, so we'll split on spaces if there are less than 3 commas
+        if (templateValues.Count < 3) templateValues = description.Split(' ').ToList();
+
         // The only template we have for ABB is motors
         result.Name = "Motor";
 

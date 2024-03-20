@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using DataNormalization.Models;
 using DataNormalization.Objects;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace DataNormalization.DbMethods;
 
@@ -18,17 +16,15 @@ public class AddItemToDb
 
             // Determine if manufacturer exists and add it if it doesn't
             var manufacturer = await context.Manufacturers.FirstOrDefaultAsync(m => m.ManfName == part.Manufacturer);
-
-            if (manufacturer is null)
-                await context.AddAsync(new tblManufacturers { ManfName = part.Manufacturer, AuthorizedDistributor = true });
+            if (manufacturer is null) await context.AddAsync(new tblManufacturers { ManfName = part.Manufacturer, AuthorizedDistributor = true });
 
             // If manufacturer exists and is not an authorized distributor, update it to be an authorized distributor
-            if (manufacturer is not null && manufacturer.AuthorizedDistributor is not true)
-                manufacturer.AuthorizedDistributor = true;
+            if (manufacturer is not null && manufacturer.AuthorizedDistributor is not true) manufacturer.AuthorizedDistributor = true;
 
             // Retrieve the Lifecycle ID if it exists
             var lifecycleId = await context.LifeCycles.FirstOrDefaultAsync(l => l.lifecycle.ToLower() == part.LifecycleStatus.ToLower());
 
+            // Determine if the part already exists and update it if it does
             var existingPart = await context.ItemInfo.FirstOrDefaultAsync(p => p.PartNumber == part.PartNumber && p.Manufacturer == part.Manufacturer);
 
             var itemInfo = new EquipmentService_ItemInfo
@@ -46,8 +42,6 @@ public class AddItemToDb
 
             if (existingPart is not null)
             {
-                existingPart.Description = itemInfo.Description;
-                existingPart.Uom = itemInfo.Uom;
                 existingPart.Weight = itemInfo.Weight;
                 existingPart.WeightUnit = itemInfo.WeightUnit;
                 existingPart.ListPrice = itemInfo.ListPrice;
@@ -60,10 +54,10 @@ public class AddItemToDb
 
             if (addedPart is null) throw new Exception("Item failed to import.");
 
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(); // Save so that we get an itemId on addedPart
 
             // Add dimensions to the database if they exist and update the part with the dimension ID
-            if (part.Dimensions is not null && part.Dimensions.Volume > 0)
+            if (part.Dimensions is not null && part.Dimensions.Volume > 0 && addedPart.DimensionId is null)
             {
                 // Get the dimension UOM ID
                 var uom = await context.DimensionsUom.FirstOrDefaultAsync(u => u.Uom == part.Dimensions.DimensionUnit);
@@ -85,8 +79,11 @@ public class AddItemToDb
                 }
             }
 
-            // Add template values to the database if they exist
-            if (part.Template is not null && !string.IsNullOrEmpty(part.Template?.Name))
+            // Determine if template values already exist for the item
+            var templateExists = await context.ItemInfoTemplateValues.AnyAsync(x => x.ItemInfoId == addedPart.ItemInfoId);
+
+            // Add template values to the database
+            if (templateExists is false && part.Template is not null && !string.IsNullOrEmpty(part.Template?.Name))
             {
                 // Get a template with the specified name
                 var template = await context.ItemInfoTemplate.FirstOrDefaultAsync(x => x.TemplateName.ToLower() == part.Template.Name.ToLower());
@@ -111,19 +108,30 @@ public class AddItemToDb
                 }
             }
 
-            // Add vendor prices to the database if Our Price and VendorId have values
+            // Determine if the part already has a price for this vendor
+            var existingVendorPrice = await context.VendorPrices.FirstOrDefaultAsync(x => x.ItemId == addedPart.ItemInfoId && x.VendorId == part.VendorId);
+
+            // Add or update vendor prices in the database if OurPrice and VendorId have values
             if (part.OurPrice is not null && part.ListPrice is not null && part.VendorId.HasValue)
             {
-                await context.VendorPrices.AddAsync(new EquipmentService_VendorPrices
+                if (existingVendorPrice is not null)
                 {
-                    ItemId = addedPart.ItemInfoId,
-                    VendorId = part.VendorId.Value,
-                    MSRP = part.ListPrice.Value,
-                    OurPrice = part.OurPrice.Value,
-                    PrimaryVendor = true
-                });
+                    existingVendorPrice.MSRP = part.ListPrice.Value;
+                    existingVendorPrice.OurPrice = part.OurPrice.Value;
+                }
+                else
+                {
+                    await context.VendorPrices.AddAsync(new EquipmentService_VendorPrices
+                    {
+                        ItemId = addedPart.ItemInfoId,
+                        VendorId = part.VendorId.Value,
+                        MSRP = part.ListPrice.Value,
+                        OurPrice = part.OurPrice.Value,
+                        PrimaryVendor = true
+                    });
+                }
             }
-             
+
             await context.SaveChangesAsync();
         }
         catch (Exception ex)
